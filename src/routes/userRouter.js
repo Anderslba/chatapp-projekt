@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { insertUser } from "../services/userService";
 
 const userRouter = Router();
 
