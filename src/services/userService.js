@@ -1,35 +1,33 @@
 import fs from 'fs/promises';
+import User from '../models/userModel.js';
 
-const userPath = './../database/users/'
+const usersFilePath = './database/users.json'
 
 async function insertUser(user) {
     try {
-        await fs.writeFile(`${userPath}/${user.id}.json`, JSON.stringify(user));
-        return true;
+        const users = await getUsers();
+        users.push(user);
+        await fs.writeFile(usersFilePath, JSON.stringify(users));
     } catch (err) {
         console.log(err);
-        return false;
     }
 }
 
 async function getUsers() {
-    let documents = await fs.readdir(userPath);
-
-    let users = documents.map(async (doc) => {
-        return await convertFileToUser(doc);
+    const userJSON = await fs.readFile(usersFilePath);
+    const usersData = JSON.parse(userJSON);
+    const users = usersData.map((u) => {
+        return new User(u.userid, u.username, u.password, u.creationData, u.level)
     })
 
     return users;
 }
 
-async function convertFileToUser(filepath) {
-    try {
-        const userJSON = await fs.readFile(filepath, { encoding: 'utf8' });
-        const data = JSON.parse(userJSON);
-        return new User(data.userid, data.username, data.password, data.creationData, userData.userLevel);
-    } catch (err) {
-        console.log(err);
-    }
+async function getUserByUsername(username) {
+    const users = await getUsers();
+    const user = users.find(user => user.username == username);
+
+    return user;
 }
 
-export { insertUser }
+export { insertUser, getUsers, getUserByUsername }

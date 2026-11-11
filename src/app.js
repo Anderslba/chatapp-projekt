@@ -1,7 +1,12 @@
 import express from 'express'
 import userRouter from './routes/userRouter.js';
+import authRouter from './routes/authRouter.js';
 const app = express();
 const port = 8080;
+
+app.use(express.urlencoded())
+
+app.use('/auth', authRouter);
 
 app.use('/users', userRouter)
 
