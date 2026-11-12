@@ -5,9 +5,11 @@ const app = express();
 const port = 8080;
 
 app.use(express.urlencoded())
+app.use(express.static('assets'))
+app.set('view engine', 'pug')
 
-app.use('/auth', authRouter);
-
+//routes
+app.use(authRouter);
 app.use('/users', userRouter)
 
 app.get('/', (req, res) =>{

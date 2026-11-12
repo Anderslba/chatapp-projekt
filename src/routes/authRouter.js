@@ -4,6 +4,10 @@ import crypto from 'crypto'
 
 const authRouter = Router();
 
+authRouter.get('/login', (req, res) => {
+    res.render('login.pug');
+})
+
 authRouter.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
