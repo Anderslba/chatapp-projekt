@@ -1,0 +1,13 @@
+header(class="wrapper-center")
+    ul
+        if user.userLevel >= 2
+            li
+                a(href="/chats") Opret ny chat 
+        li 
+            a(href="/chats") Se dine beskeder 
+        if user.userLevel >= 3
+            li 
+                a(href="/chats") Administrer brugere
+        li 
+            form(method="POST" action="/logout")
+                button(type="submit") Logud

@@ -21,7 +21,7 @@ authRouter.post('/login', async (req, res) => {
                     // opret session token her også
                     req.session.userid = user.userid;
                     req.session.userLevel = user.level;
-                    return res.status(200).json({ "status": "login ok" });
+                    return res.status(200).redirect('/chats');
                 }
             }
         }

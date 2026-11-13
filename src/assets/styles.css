@@ -8,17 +8,23 @@ html, body {
 .wrapper-center {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
 }
 
-form {
+.loginform {
     display: grid;
     gap: 12px;
     width: 500px;
 }
 
-form > div {
+.loginform > div {
     display: grid;
     gap: 5px;
+}
+
+header > ul {
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+    list-style-type: none;
 }

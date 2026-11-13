@@ -20,9 +20,15 @@ app.set('view engine', 'pug');
 //routes
 app.use(authRouter);
 app.use('/users', isAuthorized(3), userRouter);
+app.get('/chats', isAuthorized(1), (req, res) => {
+    const userid = req.session.userid;
+    const userLevel = req.session.userLevel
+    res.render('chats', {user: {userid, userLevel }})
+})
 
-app.get('/', (req, res) =>{
-    res.send('Home')
+//404 fanger alle ukendte endpoints
+app.use((req, res, next) => {
+    res.send("404 not found")
 })
 
 app.listen(port, () => {
