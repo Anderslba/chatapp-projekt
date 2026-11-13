@@ -19,6 +19,8 @@ authRouter.post('/login', async (req, res) => {
                 if (user.password == hashedPassword) {
 
                     // opret session token her også
+                    req.session.userid = user.userid;
+                    req.session.userLevel = user.level;
                     return res.status(200).json({ "status": "login ok" });
                 }
             }
@@ -31,7 +33,8 @@ authRouter.post('/login', async (req, res) => {
 })
 
 authRouter.post('/logout', (req, res) => {
-
+    req.session.destroy();
+    res.redirect('/login')
 })
 
 export default authRouter;

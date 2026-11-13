@@ -24,7 +24,6 @@ userRouter.post('/', async (req, res) => {
       return res.status(400).json({ error: "Username, password og level er påkrævet" });
     }
 
-
     //Generer id
     const userid = crypto.randomUUID();
     //Hash password
