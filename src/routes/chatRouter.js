@@ -49,7 +49,7 @@ router.delete('/:id', isAuthorized(2), async (req, res) => {
                 await deleteChat(chatid);
                 res.status(200).json("success");
             } else {
-                res.status(403).json({error: "User doesnt own the chat"})
+                res.status(403).json({error: "User doesnt own the chat"});
             }
         } else if (userLevel == 3) {
             await deleteChat(chatid);
