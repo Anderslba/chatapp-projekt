@@ -5,4 +5,5 @@ html
         h1 Oversigt
         include components/header.pug
         div(class="wrapper-center")
-            p liste af chats herunder...
+            each chat in chats 
+                p #{chat.name}
