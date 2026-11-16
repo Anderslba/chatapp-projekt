@@ -26,6 +26,10 @@ app.get('/chats', isAuthorized(1), (req, res) => {
     res.render('chats', {user: {userid, userLevel }})
 })
 
+app.get('/createuser', (req, res) => {
+    res.render('createUser.pug');
+})
+
 //404 fanger alle ukendte endpoints
 app.use((req, res, next) => {
     res.send("404 not found")
