@@ -3,33 +3,42 @@ import { insertChat, getAllChats, getChatById, deleteChat } from '../services/ch
 import Chat from '../models/chatModel.js';
 import { isAuthorized } from '../middleware/authMiddleware.js';
 
-const chatRouter = express.Router();
+import express from 'express';
+import { isAuthorized } from '../middleware/authMiddleware.js';
+import {collection,query,where,getDocs,doc, getDoc} from 'firebase/firestore';
+import { dbRef } from '../config/config.js';
 
-chatRouter.get('/', isAuthorized(1), async (req, res) => {
+const router = express.Router();
+
+//Get-Route chats
+//Skal kunne retunere en liste alle chars
+router.get('/', isAuthorized(1), async (req, res) => {
     try {
         const chats = await getAllChats();
-        res.render('chats', {chats: chats, user: {
-            userLevel: req.session.userLevel, 
-            userid: req.session.userid}
-        })
 
-    } catch(err) {
-        res.status(500).json({error: err.message})
+        res.status(200).json(chats)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({
+            error: 'Could not retrieve chats'
+        })
     }
 })
 
-chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
+//GET-Route ID
+router.get('/:id', isAuthorized(1), async (req, res) => {
     try {
-        const id = req.params.id;
-        
-        const chat = await getChatById(id);
+        const chat = await getChatById(req.params.id)
         res.status(200).json(chat);
-    } catch (err) {
-        res.status(500).json({ error: 'Kunne ikke hente chat' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: 'Server fail'
+        });
     }
 });
 
-chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
+router.delete('/:id', isAuthorized(2), async (req, res) => {
     try {
         const chatid = req.params.id;
         const userLevel = req.session.userLevel;
@@ -52,7 +61,7 @@ chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
     }
 })
 
-chatRouter.post('/', isAuthorized(2), async (req, res) => {
+router.post('/', isAuthorized(2), async (req, res) => {
     try {
         const name = req.body.name;
         const userid = req.session.userid;
@@ -67,4 +76,85 @@ chatRouter.post('/', isAuthorized(2), async (req, res) => {
     }
 });
 
-export default chatRouter;
+//GET-route ID:messages
+router.get('/:id/messages', async (req, res) => {
+    try {
+        const chatId = req.params.id;
+
+        //Flyttes ind i messagesService
+        const chatRef = doc(dbRef, 'chats', chatId);
+        const chatSnapshot = await getDoc(chatRef);
+
+        if (!chatSnapshot.exists()) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+
+        const messagesRef = collection(dbRef, 'messages');
+
+        const q = query(
+            messagesRef,
+            where('chatAffiliation', '==', chatId)
+        );
+
+        const snapshot = await getDocs(q);
+
+        const messages = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.status(200).json(messages);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Internal server error'
+        });
+    }
+});
+
+// GET-route Hent en specifik besked fra en chat
+router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        const messageId = req.params.messageId;
+
+        //Flyttes ind i messagesService
+        // Find beskeden i Firestore
+        const messageRef = doc(dbRef, 'messages', messageId);
+        const snapshot = await getDoc(messageRef);
+
+        // Tjek om beskeden eksisterer
+        if (!snapshot.exists()) {
+            return res.status(404).json({
+                error: 'Message not found'
+            });
+        }
+
+        // Tjek om beskeden tilhører den angivne chat
+        if (snapshot.data().chatAffiliation !== chatId) {
+            return res.status(404).json({
+                error: 'Message not found in this chat'
+            });
+        }
+
+        const message = {
+            id: snapshot.id,
+            ...snapshot.data()
+        };
+
+        res.status(200).json(message);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Internal server error'
+        });
+    }
+});
+
+export default router
