@@ -1,20 +1,21 @@
 import express from 'express';
-import { insertChat, getAllChats, getChatById, deleteChat } from '../services/chatService.js';
-import Chat from '../models/chatModel.js';
 import { isAuthorized } from '../middleware/authMiddleware.js';
-
-import express from 'express';
-import { isAuthorized } from '../middleware/authMiddleware.js';
-import {collection,query,where,getDocs,doc, getDoc} from 'firebase/firestore';
+import {collection,query,where,getDocs,doc,getDoc,addDoc} from 'firebase/firestore';
 import { dbRef } from '../config/config.js';
 
 const router = express.Router();
+
 
 //Get-Route chats
 //Skal kunne retunere en liste alle chars
 router.get('/', isAuthorized(1), async (req, res) => {
     try {
-        const chats = await getAllChats();
+        const snapShot = await getDocs(collection(dbRef, 'chats'));
+
+        const chats = snapShot.docs.map (doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         res.status(200).json(chats)
     } catch (error) {
@@ -26,10 +27,25 @@ router.get('/', isAuthorized(1), async (req, res) => {
 })
 
 //GET-Route ID
-router.get('/:id', isAuthorized(1), async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
-        const chat = await getChatById(req.params.id)
+        const chatRef = doc(dbRef, 'chats', req.params.id);
+        const snapShot = await getDoc(chatRef)
+
+        if (!snapShot.exists()) {
+            return res.status(404).json({
+                error: 'Chats not found'
+            });
+        }
+
+        const chat = {
+            id: snapShot.id,
+            ...snapShot.data()
+        };
+
         res.status(200).json(chat);
+
+
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -38,50 +54,11 @@ router.get('/:id', isAuthorized(1), async (req, res) => {
     }
 });
 
-router.delete('/:id', isAuthorized(2), async (req, res) => {
-    try {
-        const chatid = req.params.id;
-        const userLevel = req.session.userLevel;
-        if (userLevel == 2) {
-            const userid = req.params.userid;
-            const chat = await getChatById(chatid);
-            if (chat.owner == userid) {
-                await deleteChat(chatid);
-                res.status(200).json("success");
-            } else {
-                res.status(403).json({error: "User doesnt own the chat"})
-            }
-        } else if (userLevel == 3) {
-            await deleteChat(chatid);
-            res.status(200).json("success");
-        }
-    } catch(err) {
-        console.log(err)
-        res.status(500).json({ error: 'Kunne ikke slette chat' });
-    }
-})
-
-router.post('/', isAuthorized(2), async (req, res) => {
-    try {
-        const name = req.body.name;
-        const userid = req.session.userid;
-        if (name) {
-            const chat = new Chat(name, Date.now(), userid, null);
-            await insertChat(chat);
-            return res.status(201).json("success");
-        }
-        return res.status(400).json("name required");
-    } catch (error) {
-        return res.status(400).json({ error: error.message });
-    }
-});
-
 //GET-route ID:messages
 router.get('/:id/messages', async (req, res) => {
     try {
         const chatId = req.params.id;
 
-        //Flyttes ind i messagesService
         const chatRef = doc(dbRef, 'chats', chatId);
         const chatSnapshot = await getDoc(chatRef);
 
@@ -122,7 +99,6 @@ router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => 
         const chatId = req.params.chatId;
         const messageId = req.params.messageId;
 
-        //Flyttes ind i messagesService
         // Find beskeden i Firestore
         const messageRef = doc(dbRef, 'messages', messageId);
         const snapshot = await getDoc(messageRef);
@@ -156,5 +132,91 @@ router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => 
         });
     }
 });
+
+// POST - Opret en ny chat
+router.post('/', isAuthorized(2), async (req, res) => {
+    try {
+        const { name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({
+                error: 'Chat name is required'
+            });
+        }
+
+        const newChat = {
+            name: name,
+            owner: req.session.userId,
+            creationDate: new Date(),
+            messages: [],
+            members: [req.session.userId]
+        };
+
+        const docRef = await addDoc(collection(dbRef, 'chats'), newChat);
+
+        res.status(201).json({
+            id: docRef.id,
+            ...newChat
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Could not create chat'
+        });
+    }
+});
+
+
+// POST - Opret en besked i en chat
+router.post('/:id/messages', isAuthorized(1), async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const { message } = req.body;
+
+        // Kontroller at beskeden ikke er tom
+        if (!message) {
+            return res.status(400).json({
+                error: 'Message is required'
+            });
+        }
+
+        // Kontroller at chatten eksisterer
+        const chatRef = doc(dbRef, 'chats', chatId);
+        const chatSnapshot = await getDoc(chatRef);
+
+        if (!chatSnapshot.exists()) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+
+        const newMessage = {
+            message: message,
+            creationDate: new Date(),
+            owner: req.session.userId,
+            chatAffiliation: chatId
+        };
+
+        const docRef = await addDoc(
+            collection(dbRef, 'messages'),
+            newMessage
+        );
+
+        res.status(201).json({
+            id: docRef.id,
+            ...newMessage
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Could not create message'
+        });
+    }
+});
+
 
 export default router
