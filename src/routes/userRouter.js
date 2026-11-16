@@ -2,8 +2,12 @@ import { Router } from "express";
 import { insertUser, getUsers } from "../services/userService.js";
 import User from "../models/userModel.js";
 import crypto from 'crypto'
+import { isAuthorized } from "../middleware/authMiddleware.js";
 
 const userRouter = Router();
+
+// valider bruger og brugerlevel
+userRouter.use(isAuthorized(3));
 
 userRouter.get('/', async (req, res) => {
     try {

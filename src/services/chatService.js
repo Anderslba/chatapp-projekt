@@ -1,42 +1,27 @@
-import { child, get, push, set, remove } from 'firebase/database';
-import { dbRef } from '../config/config.js'; // Tilpas stien så den rammer jeres config.js (linje 28)
-import { ChatMessage } from '../models/chatModel.js';
+import { dbRef } from "../config/config.js"
+import Chat from "../models/chatModel.js"
+import { collection, addDoc, getDoc, doc, deleteDoc, getDocs, updateDoc } from "firebase/firestore";
 
-const MESSAGES_PATH = 'messages';
-
-export const chatService = {
-    // Hent alle beskeder (evt. filtreret på rum)
-    async getAllMessages(room = null) {
-        const snapshot = await get(child(dbRef, MESSAGES_PATH));
-        if (!snapshot.exists()) {
-            return [];
+//konverter firestore
+const chatConverter = {
+    toFirestore: chat => {
+        return {
+            name: chat.name, 
+            creationDate: chat.creationDate, 
+            owner: chat.owner
         }
-
-        const data = snapshot.val();
-        const messages = Object.entries(data).map(([id, msg]) => new ChatMessage({ id, ...msg }));
-
-        if (room) {
-            return messages.filter(msg => msg.room === room);
-        }
-        return messages;
     },
-
-    // Opret og gem en ny besked i Firebase
-    async createMessage(messageData) {
-        const newMessage = new ChatMessage(messageData);
-        const messagesRef = child(dbRef, MESSAGES_PATH);
-        const newMsgRef = push(messagesRef); // Genererer unikt ID i Firebase
-
-        await set(newMsgRef, newMessage.toFirebaseObject());
-        
-        newMessage.id = newMsgRef.key;
-        return newMessage;
-    },
-
-    // Slet en besked ud fra ID
-    async deleteMessage(id) {
-        const msgRef = child(dbRef, `${MESSAGES_PATH}/${id}`);
-        await remove(msgRef);
-        return { deletedId: id };
+    fromFirestore: (snapshot, options) => {
+        const data = snapshot.data(options);
+        const id = snapshot.id;
+        return new Chat(data.name, data.creationDate, data.owner, id);
     }
-};
+}
+
+const chatCollection = collection(dbRef, "chats").withConverter(chatConverter);
+
+async function insertChat(chat) {
+    addDoc(chatCollection.withConverter(chatConverter), chat)   
+}
+
+export { insertChat }
