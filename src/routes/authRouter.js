@@ -6,7 +6,7 @@ const authRouter = Router();
 
 // GET login
 authRouter.get("/login", (req, res) => {
-    res.render("login.pug");
+    res.render("login");
 });
 
 // POST login
@@ -55,15 +55,8 @@ authRouter.post("/login", async (req, res) => {
 
 // POST logout
 authRouter.post("/logout", (req, res) => {
-    req.session.destroy((error) => {
-        if (error) {
-            return res.status(500).json({
-                error: "Kunne ikke logge ud"
-            });
-        }
-
+    req.session.destroy();
         res.redirect("/login");
     });
-});
 
 export default authRouter;

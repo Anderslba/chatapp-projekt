@@ -30,7 +30,8 @@ async function insertChat(chat) {
 // Få en liste af alle chats
 async function getChats() {
     const snapshot = await getDocs(chatCollection);
-    return snapshot.docs.map(doc => doc.data());
+    const chats = snapshot.docs.map(doc => doc.data());
+    return chats;
 }
 
 // Returner en specifik chat med ID

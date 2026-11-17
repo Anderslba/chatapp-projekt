@@ -3,7 +3,23 @@ html
     link(rel="stylesheet", href="styles.css")
     body(class="wrapper-center")
         h1 Oversigt
-        include components/header.pug
-        div(class="wrapper-center")
+        header(class="wrapper-center")
+        ul
+            if user.userLevel >= 2
+                li
+                    a(href="/chats") Opret ny chat
+            li
+                a(href="/chats") Se dine beskeder
+            if user.userLevel >= 3
+                li
+                    a(href="/chats") Administrer brugere
+            li
+                form(method="POST" action="/logout")
+                    button(type="submit") Logud
+        
+        div(class="chats")
             each chat in chats 
-                p #{chat.name}
+                div(class="chatCard")
+                    a(href="/chats/" + chat.id) #{chat.name}
+                    if (user.userLevel == 3 || user.userLevel == 2 && chat.owner == user.userId)
+                        button slet chat

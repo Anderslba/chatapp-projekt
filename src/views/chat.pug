@@ -1,0 +1,19 @@
+html
+    head
+        title= chat.name
+        link(rel="stylesheet", href="/styles.css")
+    body(class="wrapper-center")
+        a(href="/chats") ← Tilbage
+        h1= chat.name
+
+        div(class="messages")
+            if messages.length === 0
+                p(class="empty") Ingen beskeder endnu
+            each message in messages
+                div(class="message "  + (user.userId == message.owner ? "own" : "") )
+                    span(class="author")= message.username
+                    p #{message.message}
+
+        form(class="messageForm" method="POST" action=`/chats/${chat.id}/messages`)
+            input(type="text" name="message" placeholder="Skriv en besked..." required)
+            button(type="submit") Send

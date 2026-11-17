@@ -18,24 +18,12 @@ app.use(session({
     saveUninitialized: true,
     resave: true
 }));
-app.set('views', './src/views');
 app.set('view engine', 'pug');
 
 //routes
 app.use(authRouter);
 app.use('/users', isAuthorized(3), userRouter);
-app.use('/api/chats', isAuthorized(1), chatRouter);
-
-
-//Chat-side
-app.get('/chats', isAuthorized(1), (req, res) => {
-    const userId = req.session.userId;
-    const userLevel = req.session.userLevel;
-
-    res.render('chats', {
-        user: { userId, userLevel }
-    });
-});
+app.use('/chats', isAuthorized(1), chatRouter);
 
 
 //404 fanger alle ukendte endpoints

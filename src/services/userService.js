@@ -30,4 +30,11 @@ async function getUserByUsername(username) {
     return user;
 }
 
-export { insertUser, getUsers, getUserByUsername }
+async function getUserById(userid) {
+    const users = await getUsers();
+    const user = users.find(user => user.userid == userid);
+
+    return user;
+}
+
+export { insertUser, getUsers, getUserByUsername, getUserById }

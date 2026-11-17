@@ -1,21 +1,24 @@
-import express from 'express';
+import { Router } from "express";
 import { isAuthorized } from '../middleware/authMiddleware.js';
-import {collection,query,where,getDocs,doc,getDoc,addDoc} from 'firebase/firestore';
-import { dbRef } from '../config/config.js';
-import { getChats } from '../services/chatService.js';
 
-const router = express.Router();
+import Chat from '../models/chatModel.js';
+import Message from '../models/messageModel.js';
 
+import { getChatById, getChats, insertChat } from '../services/chatService.js';
+import { getMessagesByChatId, getSpecificMessage, insertMessage } from '../services/messageService.js'
+import { getUserById } from "../services/userService.js";
+
+const chatRouter = Router();
 
 //Get-Route chats
-//Skal kunne retunere en liste alle chars
-router.get('/', isAuthorized(1), async (req, res) => {
+//Skal kunne retunere en liste alle chats
+chatRouter.get('/', isAuthorized(1), async (req, res) => {
     try {
         const chats = await getChats();
-
-        res.status(200).json(chats)
+        
+        res.render('chats', { chats, user:{userId: req.session.userId, userLevel: req.session.userLevel} })
     } catch (error) {
-        console.error(error)
+        console.log(error)
         res.status(500).json({
             error: 'Could not retrieve chats'
         })
@@ -23,105 +26,44 @@ router.get('/', isAuthorized(1), async (req, res) => {
 })
 
 //GET-Route ID
-router.get('/:id', async (req, res) => {
+chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
     try {
-        const chatRef = doc(dbRef, 'chats', req.params.id);
-        const snapShot = await getDoc(chatRef)
+        const chat = await getChatById(req.params.id);
 
-        if (!snapShot.exists()) {
-            return res.status(404).json({
-                error: 'Chats not found'
-            });
+        const messages = await getMessagesByChatId(chat.id);
+        
+        for (let message of messages) {
+            const owner = await getUserById(message.owner);
+            message.username = owner.username;
         }
 
-        const chat = {
-            id: snapShot.id,
-            ...snapShot.data()
-        };
-
-        res.status(200).json(chat);
-
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            error: 'Server fail'
-        });
-    }
-});
-
-//GET-route ID:messages
-router.get('/:id/messages', async (req, res) => {
-    try {
-        const chatId = req.params.id;
-
-        const chatRef = doc(dbRef, 'chats', chatId);
-        const chatSnapshot = await getDoc(chatRef);
-
-        if (!chatSnapshot.exists()) {
-            return res.status(404).json({
-                error: 'Chat not found'
-            });
-        }
-
-        const messagesRef = collection(dbRef, 'messages');
-
-        const q = query(
-            messagesRef,
-            where('chatAffiliation', '==', chatId)
-        );
-
-        const snapshot = await getDocs(q);
-
-        const messages = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        res.status(200).json(messages);
+        res.render('chat', {
+            chat, 
+            messages,
+            user: {
+                userId: req.session.userId,
+                userLevel: req.session.userLevel
+            }});
 
     } catch (error) {
-        console.error(error);
-
+        console.log(error);
         res.status(500).json({
-            error: 'Internal server error'
+            error: 'Server fejl'
         });
     }
 });
 
 // GET-route Hent en specifik besked fra en chat
-router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
+chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.chatId;
         const messageId = req.params.messageId;
 
-        // Find beskeden i Firestore
-        const messageRef = doc(dbRef, 'messages', messageId);
-        const snapshot = await getDoc(messageRef);
-
-        // Tjek om beskeden eksisterer
-        if (!snapshot.exists()) {
-            return res.status(404).json({
-                error: 'Message not found'
-            });
-        }
-
-        // Tjek om beskeden tilhører den angivne chat
-        if (snapshot.data().chatAffiliation !== chatId) {
-            return res.status(404).json({
-                error: 'Message not found in this chat'
-            });
-        }
-
-        const message = {
-            id: snapshot.id,
-            ...snapshot.data()
-        };
+        const message = await getSpecificMessage(chatId, messageId);
 
         res.status(200).json(message);
-
     } catch (error) {
-        console.error(error);
+        console.log(error);
 
         res.status(500).json({
             error: 'Internal server error'
@@ -130,7 +72,7 @@ router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => 
 });
 
 // POST - Opret en ny chat
-router.post('/', isAuthorized(2), async (req, res) => {
+chatRouter.post('/', isAuthorized(2), async (req, res) => {
     try {
         const { name } = req.body;
 
@@ -140,23 +82,13 @@ router.post('/', isAuthorized(2), async (req, res) => {
             });
         }
 
-        const newChat = {
-            name: name,
-            owner: req.session.userId,
-            creationDate: new Date(),
-            messages: [],
-            members: [req.session.userId]
-        };
+        const newChat = new Chat(name, Date.now(), req.session.userId, undefined);
+        await insertChat(newChat);
 
-        const docRef = await addDoc(collection(dbRef, 'chats'), newChat);
-
-        res.status(201).json({
-            id: docRef.id,
-            ...newChat
-        });
+        res.status(201).json("success");
 
     } catch (error) {
-        console.error(error);
+        console.log(error);
 
         res.status(500).json({
             error: 'Could not create chat'
@@ -166,9 +98,10 @@ router.post('/', isAuthorized(2), async (req, res) => {
 
 
 // POST - Opret en besked i en chat
-router.post('/:id/messages', isAuthorized(1), async (req, res) => {
+chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.id;
+        const ownerId = req.session.userId;
         const { message } = req.body;
 
         // Kontroller at beskeden ikke er tom
@@ -178,35 +111,14 @@ router.post('/:id/messages', isAuthorized(1), async (req, res) => {
             });
         }
 
-        // Kontroller at chatten eksisterer
-        const chatRef = doc(dbRef, 'chats', chatId);
-        const chatSnapshot = await getDoc(chatRef);
+        const newMessage = new Message(message, Date.now(), ownerId, chatId, undefined);
 
-        if (!chatSnapshot.exists()) {
-            return res.status(404).json({
-                error: 'Chat not found'
-            });
-        }
+        await insertMessage(newMessage);
 
-        const newMessage = {
-            message: message,
-            creationDate: new Date(),
-            owner: req.session.userId,
-            chatAffiliation: chatId
-        };
-
-        const docRef = await addDoc(
-            collection(dbRef, 'messages'),
-            newMessage
-        );
-
-        res.status(201).json({
-            id: docRef.id,
-            ...newMessage
-        });
+        res.redirect(`/chats/${chatId}`);
 
     } catch (error) {
-        console.error(error);
+        console.log(error);
 
         res.status(500).json({
             error: 'Could not create message'
@@ -215,4 +127,4 @@ router.post('/:id/messages', isAuthorized(1), async (req, res) => {
 });
 
 
-export default router
+export default chatRouter;

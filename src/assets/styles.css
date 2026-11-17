@@ -6,6 +6,15 @@ html, body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+button {
+    background: none;
+    border: 1px solid #353535;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: #353535;
+    cursor: pointer;
+}
+
 .wrapper-center {
     display: flex;
     flex-direction: column;
@@ -34,4 +43,85 @@ header > ul {
     flex-direction: row;
     gap: 32px;
     list-style-type: none;
+}
+
+/* chatcards */
+.chats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 500px;
+}
+
+.chatCard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.chatCard button:hover {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+.chatCard:hover {
+    background-color: #f2f2f2;
+}
+
+.chatCard p {
+    margin: 0;
+}
+
+/* messages */
+
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 500px;
+    margin-bottom: 16px;
+}
+
+.message {
+    padding: 8px 12px;
+    border: 1px solid #949494;
+    border-radius: 8px;
+    max-width: 75%;
+    align-self: flex-start;
+}
+
+.message.own {
+    align-self: flex-end;
+    background-color: #f2f2f2;
+}
+
+.message p {
+    margin: 4px 0 0;
+}
+
+.author {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.empty {
+    color: #888;
+    text-align: center;
+}
+
+.messageForm {
+    display: flex;
+    gap: 8px;
+    width: 500px;
+}
+
+.messageForm input {
+    flex: 1;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
