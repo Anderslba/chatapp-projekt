@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { insertUser, getUsers } from "../services/userService.js";
+import { insertUser, getUsers, deleteUser } from "../services/userService.js";
 import User from "../models/userModel.js";
 import crypto from 'crypto'
 import { isAuthorized } from "../middleware/authMiddleware.js";
@@ -47,8 +47,10 @@ userRouter.post('/', async (req, res) => {
 
     //Hash password
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    //userid
+    const userid = crypto.randomUUID();
 
-    const newUser = new User(undefined, username, hashedPassword, Date.now(), level)
+    const newUser = new User(userid, username, hashedPassword, Date.now(), level)
     await insertUser(newUser);
 
     res.redirect('/users');
@@ -57,5 +59,17 @@ userRouter.post('/', async (req, res) => {
     res.status(500).json({ error: "Der skete en fejl under oprettelsen af brugeren" });
   }
 });
+
+// delete user
+userRouter.delete('/:id', isAuthorized(3), async (req, res) => {
+  try {
+    const userid = req.params.id;
+    await deleteUser(userid);
+    res.status(204).send();
+  } catch(error) {
+    console.log(error)
+    res.status(500).json({ error: "fejl" });
+  }
+})
 
 export default userRouter;

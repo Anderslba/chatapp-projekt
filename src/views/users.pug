@@ -2,6 +2,7 @@ html
     head
         title Users
         link(rel="stylesheet", href="/styles.css")
+        script(src="/deleteUser.js" defer)
     body(class="wrapper-center")
         a(href="/chats") ← Tilbage
         h1 Administrer brugere
@@ -13,15 +14,15 @@ html
                     th Username
                     th Level
                     th Oprettet
-                    th Online
+                    th Aktiv
                     th
             tbody
                 each u in users
-                    tr(data-userid=u.userid)
+                    tr
                         td= u.userid
                         td= u.username
                         td= u.level
                         td= new Date().toDateString()
                         td= u.isActive ? "🟢" : "🔴"
                         td
-                            button(class="deleteBtn") Slet
+                            button(class="deleteuser" data-userid=u.userid) Slet

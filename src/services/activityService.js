@@ -1,15 +1,16 @@
-const lastSeen = new Map();
+const lastActive = new Map();
 
 function markActive(userId) {
-    lastSeen.set(userId, Date.now());
+    lastActive.set(userId, Date.now());
 }
 
 function markInactive(userId) {
-    lastSeen.delete(userId);
+    lastActive.delete(userId);
 }
 
 function isActive(userId) {
-    const time = lastSeen.get(userId);
+    const time = lastActive.get(userId);
+    // hvis 
     return time !== undefined && Date.now() - time < 5 * 60 * 1000;
 }
 

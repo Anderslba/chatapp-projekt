@@ -4,8 +4,9 @@ import { isAuthorized } from '../middleware/authMiddleware.js';
 import Chat from '../models/chatModel.js';
 import Message from '../models/messageModel.js';
 
-import { deleteChat, getChatById, getChats, insertChat } from '../services/chatService.js';
+import { deleteChat, getChatById, getChats, insertChat , editChat} from '../services/chatService.js';
 import { getMessagesByChatId, getSpecificMessage, insertMessage } from '../services/messageService.js'
+import { encryptMessage, decryptMessage } from "../services/cryptoService.js";
 import { getUserById } from "../services/userService.js";
 
 const chatRouter = Router();
@@ -24,11 +25,9 @@ chatRouter.get('/', isAuthorized(1), async (req, res) => {
     }
 });
 
-// Opret chat side router
-chatRouter.get('/create', isAuthorized(1), async (req, res) => {
+// Opret chat side route
+chatRouter.get('/create', isAuthorized(2), async (req, res) => {
     try {
-        const chats = await getChats();
-        
         res.render('createChat')
     } catch (error) {
         console.log(error)
@@ -42,15 +41,16 @@ chatRouter.get('/create', isAuthorized(1), async (req, res) => {
 chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
     try {
         const chat = await getChatById(req.params.id);
-
         let messages = await getMessagesByChatId(chat.id);
         
         for (let message of messages) {
-            const owner = await getUserById(message.owner);
-            message.username = owner.username;
+            const sender = await getUserById(message.senderId);
+            const encryptedMessage = message.message;
+            message.message = await decryptMessage(encryptedMessage, chat.owner)
+            message.username = sender ? sender.username : "deleted user";
         }
 
-        messages = messages.sort((msg1, msg2) => msg1.creationDate - msg2.creationDate);
+        messages = messages.sort((msg1, msg2) => msg2.creationDate - msg1.creationDate);
 
         res.render('chat', {
             chat, 
@@ -64,24 +64,6 @@ chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
         console.log(error);
         res.status(500).json({
             error: 'Server fejl'
-        });
-    }
-});
-
-// GET-route Hent en specifik besked fra en chat
-chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
-    try {
-        const chatId = req.params.chatId;
-        const messageId = req.params.messageId;
-
-        const message = await getSpecificMessage(chatId, messageId);
-
-        res.status(200).json(message);
-    } catch (error) {
-        console.log(error);
-
-        res.status(500).json({
-            error: 'Internal server error'
         });
     }
 });
@@ -112,10 +94,22 @@ chatRouter.post('/', isAuthorized(2), async (req, res) => {
 });
 
 // DELETE - Slet en chat
-chatRouter.delete('/:id', async (req, res) => {
+chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
     try {
-        const id = req.params.id;
-        await deleteChat(id);
+        const userLevel = req.session.userLevel;
+        const userId = req.session.userId;
+        const chatId = req.params.id;
+        
+        if (userLevel == 2) {
+            const chat = await getChatById(chatId);
+            if (userId != chat.owner) {
+                return res.status(400).json({
+                    error: 'Could not delete an other users chat'
+                });
+            }
+        }
+        
+        await deleteChat(chatId);
         res.status(204).send();
     } catch (error) {
         console.log(error);
@@ -126,12 +120,42 @@ chatRouter.delete('/:id', async (req, res) => {
     }
 })
 
+// PUT - Rediger en chat
+chatRouter.put('/:id', isAuthorized(2), async (req, res) => {
+    try {
+        const userLevel = req.session.userLevel;
+        const userId = req.session.userId;
+        const chatId = req.params.id;
+        const newname = req.body.name;
+        
+        if (userLevel == 2) {
+            const chat = await getChatById(chatId);
+            if (userId != chat.owner) {
+                return res.status(400).json({
+                    error: 'Could not edit an other users chat'
+                });
+            }
+        }
+
+        await editChat(chatId, newname);
+        res.status(200).send();
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({
+            error: 'Could not edit chat'
+        });
+    }
+})
+
+
+
+// Messages
 
 // POST - Opret en besked i en chat
 chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.id;
-        const ownerId = req.session.userId;
+        const senderId = req.session.userId;
         const { message } = req.body;
 
         // Kontroller at beskeden ikke er tom
@@ -141,12 +165,15 @@ chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
             });
         }
 
-        const newMessage = new Message(message, Date.now(), ownerId, chatId, undefined);
+        // find chattens ejer id og krypter beskedf
+        const chat = await getChatById(chatId);
+        const encryptedMessage = await encryptMessage(message, chat.owner);
+
+        const newMessage = new Message(encryptedMessage, Date.now(), senderId, chatId, undefined);
 
         await insertMessage(newMessage);
 
         res.redirect(`/chats/${chatId}`);
-
     } catch (error) {
         console.log(error);
 
@@ -155,6 +182,32 @@ chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
         });
     }
 });
+
+// GET - Hent en specifik besked fra en chat
+chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
+    try {
+        const chatId = req.params.chatId;
+        const chat = await getChatById(chatId);
+        const messageId = req.params.messageId;
+
+        const message = await getSpecificMessage(chatId, messageId);
+        if (!message) return res.status(404).json({ error: 'Besked ikke fundet' });
+
+        const encryptedMessage = message.message;
+        message.message = decryptMessage(encryptedMessage, chat.owner);
+
+        res.status(200).json(message);
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            error: 'Internal server error'
+        });
+    }
+});
+
+
+
 
 
 export default chatRouter;

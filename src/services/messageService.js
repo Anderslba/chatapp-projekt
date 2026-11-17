@@ -8,14 +8,14 @@ const messageConverter = {
         return {
             message: message.message,
             creationDate: message.creationDate,
-            owner: message.owner,
+            senderId: message.senderId,
             chat: message.chat
         };
     },
     fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
         const id = snapshot.id;
-        return new Message(data.message, data.creationDate, data.owner, data.chat, id);
+        return new Message(data.message, data.creationDate, data.senderId, data.chat, id);
     }
 };
 
@@ -40,10 +40,9 @@ async function getSpecificMessage(chatid, messageid) {
 
     const message = snapshot.data();
 
-    // tjek at beskeden faktisk hører til den chat
-    if (message.chat !== chatid) {
+    if (message.chat.id != chatid) {
         return null;
-    } 
+    }
 
     return message;
 }

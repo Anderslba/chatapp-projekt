@@ -53,4 +53,11 @@ async function deleteChat(id) {
     return { deletedId: id };
 }
 
-export { insertChat, getChats, getChatById, deleteChat };
+// Rediger navn på chat
+async function editChat(id, name) {
+    const chatDocRef = doc(dbRef, "chats", id);
+    await updateDoc(chatDocRef, { name: name });
+    return { id, name };
+}
+
+export { insertChat, getChats, getChatById, deleteChat, editChat };
