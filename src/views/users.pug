@@ -22,7 +22,7 @@ html
                         td= u.userid
                         td= u.username
                         td= u.level
-                        td= new Date().toDateString()
+                        td= new Date(u.creationDate).toDateString()
                         td= u.isActive ? "🟢" : "🔴"
                         td
                             button(class="deleteuser" data-userid=u.userid) Slet

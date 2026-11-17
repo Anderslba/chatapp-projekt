@@ -2,7 +2,6 @@ import express from 'express'
 import userRouter from './routes/userRouter.js';
 import authRouter from './routes/authRouter.js';
 import session from 'express-session'
-import { isAuthorized } from './middleware/authMiddleware.js';
 import { sessionConfig } from './config/config.js';
 import chatRouter from './routes/chatRouter.js';
 
@@ -22,8 +21,8 @@ app.set('view engine', 'pug');
 
 //routes
 app.use(authRouter);
-app.use('/users', isAuthorized(3), userRouter);
-app.use('/chats', isAuthorized(1), chatRouter);
+app.use('/users', userRouter);
+app.use('/chats', chatRouter);
 
 
 //404 fanger alle ukendte endpoints

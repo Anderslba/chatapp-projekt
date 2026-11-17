@@ -1,7 +1,8 @@
 const editBtn = document.querySelector('.editchat');
 const nameInput = document.querySelector('.chatname');
 
-editBtn.addEventListener('click', async (event) => {
+if (editBtn) {
+    editBtn.addEventListener('click', async (event) => {
     event.preventDefault();
 
     const chatid = editBtn.dataset.chatid;
@@ -26,3 +27,5 @@ editBtn.addEventListener('click', async (event) => {
         alert("Kunne ikke redigere chatten");
     }
 });
+}
+

@@ -194,7 +194,7 @@ chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res)
         if (!message) return res.status(404).json({ error: 'Besked ikke fundet' });
 
         const encryptedMessage = message.message;
-        message.message = decryptMessage(encryptedMessage, chat.owner);
+        message.message = await decryptMessage(encryptedMessage, chat.owner);
 
         res.status(200).json(message);
     } catch (error) {

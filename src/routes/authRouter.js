@@ -39,7 +39,7 @@ authRouter.post("/login", async (req, res) => {
             });
         }
 
-        req.session.userId = user.userid;
+        req.session.userId = user.userId;
         req.session.userLevel = user.level;
 
         return res.redirect("/chats");

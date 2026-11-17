@@ -16,7 +16,7 @@ userRouter.get('/', async (req, res) => {
         const users = await getUsers();
         const safeUsers = users.map(user => {
             const safeUser = user.userWithoutPassword();
-            safeUser.isActive = isActive(safeUser.userid);
+            safeUser.isActive = isActive(safeUser.userId);
             return safeUser;
         });
 
@@ -47,10 +47,10 @@ userRouter.post('/', async (req, res) => {
 
     //Hash password
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    //userid
-    const userid = crypto.randomUUID();
+    //userId
+    const userId = crypto.randomUUID();
 
-    const newUser = new User(userid, username, hashedPassword, Date.now(), level)
+    const newUser = new User(userId, username, hashedPassword, Date.now(), level)
     await insertUser(newUser);
 
     res.redirect('/users');
@@ -61,10 +61,10 @@ userRouter.post('/', async (req, res) => {
 });
 
 // delete user
-userRouter.delete('/:id', isAuthorized(3), async (req, res) => {
+userRouter.delete('/:id', async (req, res) => {
   try {
-    const userid = req.params.id;
-    await deleteUser(userid);
+    const userId = req.params.id;
+    await deleteUser(userId);
     res.status(204).send();
   } catch(error) {
     console.log(error)

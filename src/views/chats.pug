@@ -1,14 +1,15 @@
 html 
-    title Oversigt 
-    link(rel="stylesheet", href="styles.css")
-    script(src="/deleteChat.js" defer)
+    head
+        title Oversigt 
+        link(rel="stylesheet", href="styles.css")
+        script(src="/deleteChat.js" defer)
     body(class="wrapper-center")
         h1 Oversigt
         header(class="wrapper-center")
             ul
                 if user.userLevel >= 2
-                li
-                    a(href="/chats/create") Opret ny chat
+                    li
+                        a(href="/chats/create") Opret ny chat
                 li
                     a(href="/chats") Se dine beskeder
                 if user.userLevel >= 3

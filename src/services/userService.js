@@ -4,25 +4,25 @@ import { generateKeyPair } from './cryptoService.js';
 
 const usersDirPath = './database/users/';
 
-function userDir(userid) {
-    return usersDirPath + userid + '/';
+function userDir(userId) {
+    return usersDirPath + userId + '/';
 }
 
-function userFile(userid) {
-    return userDir(userid) + `${userid}.json`;
+function userFile(userId) {
+    return userDir(userId) + `${userId}.json`;
 }
 
 async function insertUser(user) {
-    // split userid fra andet userdata for at undgå at gemme id 2 gange
+    // split userId fra andet userdata for at undgå at gemme id 2 gange
     // id gemmes som filnavn
-    const { userid, ...userdata } = user;
+    const { userId, ...userdata } = user;
     const { publicKey, privateKey } = generateKeyPair();
 
-    await fs.mkdir(userDir(userid), { recursive: true });
-    await fs.writeFile(userFile(userid), JSON.stringify(userdata));
+    await fs.mkdir(userDir(userId), { recursive: true });
+    await fs.writeFile(userFile(userId), JSON.stringify(userdata));
 
-    await fs.writeFile(userDir(userid) + '/public.pem', publicKey);
-    await fs.writeFile(userDir(userid) + '/private.pem', privateKey);
+    await fs.writeFile(userDir(userId) + '/public.pem', publicKey);
+    await fs.writeFile(userDir(userId) + '/private.pem', privateKey);
 
     return user;
 }
@@ -46,38 +46,30 @@ async function getUserByUsername(username) {
     return users.find(user => user.username == username);
 }
 
-async function getUserById(userid) {
+async function getUserById(userId) {
     try {
-        const userJSON = await fs.readFile(userFile(userid));
+        const userJSON = await fs.readFile(userFile(userId));
         const user = JSON.parse(userJSON);
-        return new User(userid, user.username, user.password, user.creationDate, user.level);
+        return new User(userId, user.username, user.password, user.creationDate, user.level);
+    } catch (err) {
+        return null;
+    }
+}
+
+async function deleteUser(userId) {
+    try {
+        await fs.rm(userDir(userId), { recursive: true });
     } catch (err) {
         console.log(err)
     }
 }
 
-async function deleteUser(userid) {
-    try {
-        await fs.rm(userDir(userid), { recursive: true });
-    } catch (err) {
-        console.log(err)
-    }
+async function getPrivateKey(userId) {
+    return await fs.readFile(userDir(userId) + 'private.pem');
 }
 
-async function getPrivateKey(userid) {
-    try {
-        return await fs.readFile(userDir(userid) + 'private.pem');
-    } catch (err) {
-        console.log(err)
-    }
-}
-
-async function getPublicKey(userid) {
-    try {
-        return await fs.readFile(userDir(userid) + 'public.pem');
-    } catch (err) {
-        console.log(err)
-    }
+async function getPublicKey(userId) {
+    return await fs.readFile(userDir(userId) + 'public.pem');
 }
 
 export { insertUser, getUsers, getUserByUsername, getUserById, deleteUser, getPrivateKey, getPublicKey };

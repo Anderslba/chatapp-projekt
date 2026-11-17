@@ -40,7 +40,7 @@ async function getSpecificMessage(chatid, messageid) {
 
     const message = snapshot.data();
 
-    if (message.chat.id != chatid) {
+    if (message.chat != chatid) {
         return null;
     }
 
