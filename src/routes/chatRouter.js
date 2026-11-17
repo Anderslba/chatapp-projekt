@@ -2,6 +2,7 @@ import express from 'express';
 import { isAuthorized } from '../middleware/authMiddleware.js';
 import {collection,query,where,getDocs,doc,getDoc,addDoc} from 'firebase/firestore';
 import { dbRef } from '../config/config.js';
+import { getChats } from '../services/chatService.js';
 
 const router = express.Router();
 
@@ -10,12 +11,7 @@ const router = express.Router();
 //Skal kunne retunere en liste alle chars
 router.get('/', isAuthorized(1), async (req, res) => {
     try {
-        const snapShot = await getDocs(collection(dbRef, 'chats'));
-
-        const chats = snapShot.docs.map (doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const chats = await getChats();
 
         res.status(200).json(chats)
     } catch (error) {

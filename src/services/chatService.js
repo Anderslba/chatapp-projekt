@@ -28,7 +28,7 @@ async function insertChat(chat) {
 }
 
 // Få en liste af alle chats
-async function getAllChats() {
+async function getChats() {
     const snapshot = await getDocs(chatCollection);
     return snapshot.docs.map(doc => doc.data());
 }
@@ -52,4 +52,4 @@ async function deleteChat(id) {
     return { deletedId: id };
 }
 
-export { insertChat, getAllChats, getChatById, deleteChat };
+export { insertChat, getChats, getChatById, deleteChat };
