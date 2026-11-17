@@ -6,6 +6,11 @@ class User {
         this.creationDate = creationDate;
         this.level = level;
     }
+
+    userWithoutPassword() {
+        const { password, ...rest } = this;
+        return rest;
+    }
 }
 
 export default User

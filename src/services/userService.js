@@ -6,6 +6,8 @@ const usersFilePath = './database/users.json'
 async function insertUser(user) {
     try {
         const users = await getUsers();
+        const lastUser = users[users.length - 1];
+        user.userid = lastUser ? Number(lastUser.userid) + 1 : 1;
         users.push(user);
         await fs.writeFile(usersFilePath, JSON.stringify(users));
     } catch (err) {
@@ -17,7 +19,7 @@ async function getUsers() {
     const userJSON = await fs.readFile(usersFilePath);
     const usersData = JSON.parse(userJSON);
     const users = usersData.map((u) => {
-        return new User(u.userid, u.username, u.password, u.creationData, u.level)
+        return new User(u.userid, u.username, u.password, u.creationDate, u.level)
     })
 
     return users;

@@ -1,0 +1,13 @@
+html 
+    title Create chat 
+    link(rel="stylesheet" href="/styles.css")
+    body 
+        div(class="wrapper-center")
+            a(href="/chats") ← Tilbage
+            h1 Create new chat
+            form(action="/chats" method="POST" class="userform")
+                div
+                    label(for="name") name
+                    input(type="text" id="name" name="name" required)
+                
+                button(type="submit") create chat

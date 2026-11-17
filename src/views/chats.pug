@@ -1,25 +1,26 @@
 html 
     title Oversigt 
     link(rel="stylesheet", href="styles.css")
+    script(src="/chatsScript.js" defer)
     body(class="wrapper-center")
         h1 Oversigt
         header(class="wrapper-center")
-        ul
-            if user.userLevel >= 2
+            ul
+                if user.userLevel >= 2
                 li
-                    a(href="/chats") Opret ny chat
-            li
-                a(href="/chats") Se dine beskeder
-            if user.userLevel >= 3
+                    a(href="/chats/create") Opret ny chat
                 li
-                    a(href="/chats") Administrer brugere
-            li
-                form(method="POST" action="/logout")
-                    button(type="submit") Logud
+                    a(href="/chats") Se dine beskeder
+                if user.userLevel >= 3
+                    li
+                        a(href="/users") Administrer brugere
+                li
+                    form(method="POST" action="/logout")
+                        button(type="submit") Logud
         
         div(class="chats")
             each chat in chats 
                 div(class="chatCard")
                     a(href="/chats/" + chat.id) #{chat.name}
                     if (user.userLevel == 3 || user.userLevel == 2 && chat.owner == user.userId)
-                        button slet chat
+                        button(class="deletechat" data-chatid="" + chat.id) slet chat
