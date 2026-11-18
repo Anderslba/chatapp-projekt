@@ -1,155 +1,204 @@
-import express from 'express';
-import { insertChat, getAllChats, getChatById, deleteChat } from '../services/chatService.js';
+import { Router } from "express";
+import { isAuthorized } from '../middleware/authMiddleware.js';
+
 import Chat from '../models/chatModel.js';
-import { isAuthorized } from '../middleware/authMiddleware.js';
+import Message from '../models/messageModel.js';
 
-import express from 'express';
-import { isAuthorized } from '../middleware/authMiddleware.js';
-import {collection,query,where,getDocs,doc, getDoc} from 'firebase/firestore';
-import { dbRef } from '../config/config.js';
+import { deleteChat, getChatById, getChats, insertChat , editChat} from '../services/chatService.js';
+import { getMessagesByChatId, getSpecificMessage, insertMessage } from '../services/messageService.js'
+import { encryptMessage, decryptMessage } from "../services/cryptoService.js";
+import { getUserById } from "../services/userService.js";
 
-const router = express.Router();
+const chatRouter = Router();
 
-//Get-Route chats
-//Skal kunne retunere en liste alle chars
-router.get('/', isAuthorized(1), async (req, res) => {
+// Chat side route
+chatRouter.get('/', isAuthorized(1), async (req, res) => {
     try {
-        const chats = await getAllChats();
-
-        res.status(200).json(chats)
+        const chats = await getChats();
+        
+        res.render('chats', { chats, user:{userId: req.session.userId, userLevel: req.session.userLevel} })
     } catch (error) {
-        console.error(error)
+        console.log(error)
         res.status(500).json({
             error: 'Could not retrieve chats'
         })
     }
-})
+});
+
+// Opret chat side route
+chatRouter.get('/create', isAuthorized(2), async (req, res) => {
+    try {
+        res.render('createChat')
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            error: 'Could not retrieve chats'
+        })
+    }
+});
 
 //GET-Route ID
-router.get('/:id', isAuthorized(1), async (req, res) => {
+chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
     try {
-        const chat = await getChatById(req.params.id)
-        res.status(200).json(chat);
+        const chat = await getChatById(req.params.id);
+        let messages = await getMessagesByChatId(chat.id);
+        
+        for (let message of messages) {
+            const sender = await getUserById(message.senderId);
+            const encryptedMessage = message.message;
+            message.message = await decryptMessage(encryptedMessage, chat.owner)
+            message.username = sender ? sender.username : "deleted user";
+        }
+
+        messages = messages.sort((msg1, msg2) => msg2.creationDate - msg1.creationDate);
+
+        res.render('chat', {
+            chat, 
+            messages,
+            user: {
+                userId: req.session.userId,
+                userLevel: req.session.userLevel
+            }});
+
     } catch (error) {
-        console.error(error);
+        console.log(error);
         res.status(500).json({
-            error: 'Server fail'
+            error: 'Server fejl'
         });
     }
 });
 
-router.delete('/:id', isAuthorized(2), async (req, res) => {
+// POST - Opret en ny chat
+chatRouter.post('/', isAuthorized(2), async (req, res) => {
     try {
-        const chatid = req.params.id;
-        const userLevel = req.session.userLevel;
-        if (userLevel == 2) {
-            const userid = req.params.userid;
-            const chat = await getChatById(chatid);
-            if (chat.owner == userid) {
-                await deleteChat(chatid);
-                res.status(200).json("success");
-            } else {
-                res.status(403).json({error: "User doesnt own the chat"});
-            }
-        } else if (userLevel == 3) {
-            await deleteChat(chatid);
-            res.status(200).json("success");
+        const { name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({
+                error: 'Chat name is required'
+            });
         }
-    } catch(err) {
-        console.log(err)
-        res.status(500).json({ error: 'Kunne ikke slette chat' });
+
+        const newChat = new Chat(name, Date.now(), req.session.userId, undefined);
+        await insertChat(newChat);
+
+        res.redirect('/chats')
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            error: 'Could not create chat'
+        });
+    }
+});
+
+// DELETE - Slet en chat
+chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
+    try {
+        const userLevel = req.session.userLevel;
+        const userId = req.session.userId;
+        const chatId = req.params.id;
+        
+        if (userLevel == 2) {
+            const chat = await getChatById(chatId);
+            if (userId != chat.owner) {
+                return res.status(400).json({
+                    error: 'Could not delete an other users chat'
+                });
+            }
+        }
+        
+        await deleteChat(chatId);
+        res.status(204).send();
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            error: 'Could not delete chat'
+        });
     }
 })
 
-router.post('/', isAuthorized(2), async (req, res) => {
+// PUT - Rediger en chat
+chatRouter.put('/:id', isAuthorized(2), async (req, res) => {
     try {
-        const name = req.body.name;
-        const userid = req.session.userid;
-        if (name) {
-            const chat = new Chat(name, Date.now(), userid, null);
-            await insertChat(chat);
-            return res.status(201).json("success");
+        const userLevel = req.session.userLevel;
+        const userId = req.session.userId;
+        const chatId = req.params.id;
+        const newname = req.body.name;
+        
+        if (userLevel == 2) {
+            const chat = await getChatById(chatId);
+            if (userId != chat.owner) {
+                return res.status(400).json({
+                    error: 'Could not edit an other users chat'
+                });
+            }
         }
-        return res.status(400).json("name required");
-    } catch (error) {
-        return res.status(400).json({ error: error.message });
-    }
-});
 
-//GET-route ID:messages
-router.get('/:id/messages', async (req, res) => {
+        await editChat(chatId, newname);
+        res.status(200).send();
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({
+            error: 'Could not edit chat'
+        });
+    }
+})
+
+
+
+// Messages
+
+// POST - Opret en besked i en chat
+chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.id;
+        const senderId = req.session.userId;
+        const { message } = req.body;
 
-        //Flyttes ind i messagesService
-        const chatRef = doc(dbRef, 'chats', chatId);
-        const chatSnapshot = await getDoc(chatRef);
-
-        if (!chatSnapshot.exists()) {
-            return res.status(404).json({
-                error: 'Chat not found'
+        // Kontroller at beskeden ikke er tom
+        if (!message) {
+            return res.status(400).json({
+                error: 'Message is required'
             });
         }
 
-        const messagesRef = collection(dbRef, 'messages');
+        // find chattens ejer id og krypter beskedf
+        const chat = await getChatById(chatId);
+        const encryptedMessage = await encryptMessage(message, chat.owner);
 
-        const q = query(
-            messagesRef,
-            where('chatAffiliation', '==', chatId)
-        );
+        const newMessage = new Message(encryptedMessage, Date.now(), senderId, chatId, undefined);
 
-        const snapshot = await getDocs(q);
+        await insertMessage(newMessage);
 
-        const messages = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        res.status(200).json(messages);
-
+        res.redirect(`/chats/${chatId}`);
     } catch (error) {
-        console.error(error);
+        console.log(error);
 
         res.status(500).json({
-            error: 'Internal server error'
+            error: 'Could not create message'
         });
     }
 });
 
-// GET-route Hent en specifik besked fra en chat
-router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
+// GET - Hent en specifik besked fra en chat
+chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.chatId;
+        const chat = await getChatById(chatId);
         const messageId = req.params.messageId;
 
-        //Flyttes ind i messagesService
-        // Find beskeden i Firestore
-        const messageRef = doc(dbRef, 'messages', messageId);
-        const snapshot = await getDoc(messageRef);
+        const message = await getSpecificMessage(chatId, messageId);
+        if (!message) return res.status(404).json({ error: 'Besked ikke fundet' });
 
-        // Tjek om beskeden eksisterer
-        if (!snapshot.exists()) {
-            return res.status(404).json({
-                error: 'Message not found'
-            });
-        }
-
-        // Tjek om beskeden tilhører den angivne chat
-        if (snapshot.data().chatAffiliation !== chatId) {
-            return res.status(404).json({
-                error: 'Message not found in this chat'
-            });
-        }
-
-        const message = {
-            id: snapshot.id,
-            ...snapshot.data()
-        };
+        const encryptedMessage = message.message;
+        message.message = await decryptMessage(encryptedMessage, chat.owner);
 
         res.status(200).json(message);
-
     } catch (error) {
-        console.error(error);
+        console.log(error);
 
         res.status(500).json({
             error: 'Internal server error'
@@ -157,4 +206,8 @@ router.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => 
     }
 });
 
-export default router
+
+
+
+
+export default chatRouter;

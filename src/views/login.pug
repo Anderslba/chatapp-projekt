@@ -1,14 +1,15 @@
 html
-    title Login
-    link(rel="stylesheet", href="styles.css")
+    head
+        title Login
+        link(rel="stylesheet", href="styles.css")
     body 
         div(class="wrapper-center")
             h1 Login 
             form(action="/login" method="POST" class="userform")
                 div
                     label(for="username") username
-                    input(type="text" name="username")
+                    input(type="text" name="username" id="username")
                 div
                     label(for="password") password
-                    input(type="password" name="password") 
+                    input(type="password" name="password" id="password") 
                 button(type="submit") Login

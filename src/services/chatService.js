@@ -28,9 +28,10 @@ async function insertChat(chat) {
 }
 
 // Få en liste af alle chats
-async function getAllChats() {
+async function getChats() {
     const snapshot = await getDocs(chatCollection);
-    return snapshot.docs.map(doc => doc.data());
+    const chats = snapshot.docs.map(doc => doc.data());
+    return chats;
 }
 
 // Returner en specifik chat med ID
@@ -52,4 +53,11 @@ async function deleteChat(id) {
     return { deletedId: id };
 }
 
-export { insertChat, getAllChats, getChatById, deleteChat };
+// Rediger navn på chat
+async function editChat(id, name) {
+    const chatDocRef = doc(dbRef, "chats", id);
+    await updateDoc(chatDocRef, { name: name });
+    return { id, name };
+}
+
+export { insertChat, getChats, getChatById, deleteChat, editChat };

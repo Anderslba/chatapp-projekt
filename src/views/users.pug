@@ -1,0 +1,28 @@
+html
+    head
+        title Users
+        link(rel="stylesheet", href="/styles.css")
+        script(src="/deleteUser.js" defer)
+    body(class="wrapper-center")
+        a(href="/chats") ← Tilbage
+        h1 Administrer brugere
+        a(href="/users/create") Opret ny bruger
+        table(class="users-table")
+            thead
+                tr
+                    th Id
+                    th Username
+                    th Level
+                    th Oprettet
+                    th Aktiv
+                    th
+            tbody
+                each u in users
+                    tr
+                        td= u.userid
+                        td= u.username
+                        td= u.level
+                        td= new Date(u.creationDate).toDateString()
+                        td= u.isActive ? "🟢" : "🔴"
+                        td
+                            button(class="deleteuser" data-userid=u.userid) Slet

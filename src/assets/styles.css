@@ -1,21 +1,58 @@
-
 html, body {
     margin: 0;
-    width: 100%;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* layout */
 .wrapper-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 12px;
 }
 
+.userform, .chats, .messages, .messageForm {
+    width: 500px;
+}
+
+/* fælles elementer */
+button, input {
+    font: inherit;
+    border-radius: 8px;
+}
+
+button {
+    background: none;
+    border: 1px solid #353535;
+    padding: 4px 10px;
+    color: #353535;
+    cursor: pointer;
+}
+
+.deleteBtn:hover {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+input {
+    padding: 6px;
+    border: 1px solid #ccc;
+}
+
+/* header */
+header ul {
+    display: grid;
+    grid-auto-flow: column;
+    gap: 32px;
+    list-style: none;
+    padding: 0;
+}
+
+/* formularer */
 .userform {
     display: grid;
     gap: 12px;
-    width: 500px;
 }
 
 .userform > div {
@@ -23,15 +60,90 @@ html, body {
     gap: 5px;
 }
 
-.userform input {
-    padding: 4px;
-    border-radius: 8px;
-    border: 1px solid;
+.messageForm {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
 }
 
-header > ul {
+/* chatcards */
+.chats {
+    display: grid;
+    gap: 10px;
+}
+
+.chatCard {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.chatCard:hover {
+    background: #f2f2f2;
+}
+
+/* beskeder */
+.messages {
     display: flex;
-    flex-direction: row;
-    gap: 32px;
-    list-style-type: none;
+    flex-direction: column-reverse;
+    gap: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.message {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    max-width: 75%;
+    align-self: flex-start;
+}
+
+.message.own {
+    align-self: flex-end;
+    background: #f2f2f2;
+}
+
+.chatCard p, .message p {
+    margin: 0;
+}
+
+.author, .empty {
+    color: #888;
+}
+
+.author {
+    font-size: 0.8em;
+}
+
+.empty {
+    text-align: center;
+}
+
+/* brugertabel */
+.users-table {
+    width: 700px;
+    border-collapse: collapse;
+}
+
+.users-table th, .users-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+}
+
+.users-table th {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.users-table tbody tr:hover {
+    background: #f2f2f2;
 }

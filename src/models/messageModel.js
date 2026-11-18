@@ -1,8 +1,8 @@
 class Message {
-    constructor(message, creationDate, owner, chat, id) {
+    constructor(message, creationDate, senderId, chat, id) {
         this.message = message;
         this.creationDate = creationDate;
-        this.owner = owner;
+        this.senderId = senderId;
         this.chat = chat;
         this.id = id;
     }

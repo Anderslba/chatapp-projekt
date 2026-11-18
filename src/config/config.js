@@ -1,28 +1,31 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore  }  from 'firebase/firestore'
-import fs from 'fs/promises'
+import { getFirestore } from 'firebase/firestore';
+import fs from 'fs/promises';
 
+// Læs Firebase config
 async function readFirebaseConfigFile() {
-    try {
-        const data = await fs.readFile('.././firebaseConfig.json',{ encoding: 'utf8' });
-        return JSON.parse(data)
-    } catch (err) {
-        console.log(err);
-    }
+    const data = await fs.readFile(
+        './../firebaseConfig.json',
+        'utf8'
+    );
+    return JSON.parse(data);
 }
 
+// Læs session config
 async function readSessionConfigFile() {
-    try {
-        const data = await fs.readFile('.././sessionConfig.json',{ encoding: 'utf8' });
-        return JSON.parse(data)
-    } catch (err) {
-        console.log(err);
-    }
+    const data = await fs.readFile(
+        './../sessionConfig.json',
+        'utf8'
+    );
+    return JSON.parse(data);
 }
 
-// Initialize Firebase
-const fbapp = initializeApp(await readFirebaseConfigFile());
+// Initialiser Firebase
+const firebaseConfig = await readFirebaseConfigFile();
+
+const fbapp = initializeApp(firebaseConfig);
 const dbRef = getFirestore(fbapp);
+
 const sessionConfig = await readSessionConfigFile();
 
-export { dbRef, sessionConfig }
+export { dbRef, sessionConfig };
