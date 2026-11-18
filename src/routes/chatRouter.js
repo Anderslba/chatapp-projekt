@@ -9,7 +9,6 @@ import { deleteChat, getChatById, getChats, insertChat , editChat} from '../serv
 import { getMessagesByChatId, getSpecificMessage, insertMessage, getMessagesBySenderId } from '../services/messageService.js'
 import { encryptMessage, decryptMessage } from "../services/cryptoService.js";
 import { getUserById } from "../services/userService.js";
-import { charLength } from "firebase/firestore/pipelines";
 
 const chatRouter = Router();
 
@@ -251,6 +250,8 @@ chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
 });
 
 // GET - Hent en specifik besked fra en chat
+
+// Bliver ikke brugt pt i UI, men kan bruges til at hente en specifik besked i en chat   
 chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res) => {
     try {
         const chatId = req.params.chatId;
