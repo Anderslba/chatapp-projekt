@@ -64,11 +64,19 @@ userRouter.post('/', async (req, res) => {
 userRouter.delete('/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    await deleteUser(userId);
-    res.status(204).send();
+    if (userId) {
+
+    }
+    const deleted = await deleteUser(userId);
+    if (deleted) {
+      res.status(204).send();
+    } else {
+      res.status(404).json({error: "Bruger blev ikke slettet"});
+    }
+    
   } catch(error) {
     console.log(error)
-    res.status(500).json({ error: "fejl" });
+    res.status(400).json({ error: "fejl" });
   }
 })
 
