@@ -15,5 +15,5 @@ deleteBtns.forEach(btn => {
                 alert("Kunne ikke slette brugeren");
             }
         }
-    })
-})
+    });
+});

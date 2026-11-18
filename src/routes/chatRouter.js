@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import { isAuthorized } from '../middleware/authMiddleware.js';
 
@@ -41,6 +42,13 @@ chatRouter.get('/create', isAuthorized(2), async (req, res) => {
 chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
     try {
         const chat = await getChatById(req.params.id);
+
+        if (!chat) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+
         let messages = await getMessagesByChatId(chat.id);
         
         for (let message of messages) {
@@ -73,13 +81,13 @@ chatRouter.post('/', isAuthorized(2), async (req, res) => {
     try {
         const { name } = req.body;
 
-        if (!name) {
+        if (!name || !name.trim()) {
             return res.status(400).json({
                 error: 'Chat name is required'
             });
         }
 
-        const newChat = new Chat(name, Date.now(), req.session.userId, undefined);
+        const newChat = new Chat(name.trim(), Date.now(), req.session.userId, undefined);
         await insertChat(newChat);
 
         res.redirect('/chats')
@@ -96,17 +104,22 @@ chatRouter.post('/', isAuthorized(2), async (req, res) => {
 // DELETE - Slet en chat
 chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
     try {
-        const userLevel = req.session.userLevel;
+        const userLevel = Number(req.session.userLevel);
         const userId = req.session.userId;
         const chatId = req.params.id;
+
+        const chat = await getChatById(chatId);
+
+        if (!chat) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
         
-        if (userLevel == 2) {
-            const chat = await getChatById(chatId);
-            if (userId != chat.owner) {
-                return res.status(400).json({
-                    error: 'Could not delete an other users chat'
-                });
-            }
+        if (userLevel == 2 && userId != chat.owner) {
+            return res.status(403).json({
+                error: 'Could not delete an other users chat'
+            });
         }
         
         await deleteChat(chatId);
@@ -123,21 +136,32 @@ chatRouter.delete('/:id', isAuthorized(2), async (req, res) => {
 // PUT - Rediger en chat
 chatRouter.put('/:id', isAuthorized(2), async (req, res) => {
     try {
-        const userLevel = req.session.userLevel;
+        const userLevel = Number(req.session.userLevel);
         const userId = req.session.userId;
         const chatId = req.params.id;
         const newname = req.body.name;
-        
-        if (userLevel == 2) {
-            const chat = await getChatById(chatId);
-            if (userId != chat.owner) {
-                return res.status(400).json({
-                    error: 'Could not edit an other users chat'
-                });
-            }
+
+        if (!newname || !newname.trim()) {
+            return res.status(400).json({
+                error: 'Chat name is required'
+            });
         }
 
-        await editChat(chatId, newname);
+        const chat = await getChatById(chatId);
+
+        if (!chat) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+        
+        if (userLevel == 2 && userId != chat.owner) {
+            return res.status(403).json({
+                error: 'Could not edit an other users chat'
+            });
+        }
+
+        await editChat(chatId, newname.trim());
         res.status(200).send();
     } catch(error) {
         console.log(error)
@@ -159,7 +183,7 @@ chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
         const { message } = req.body;
 
         // Kontroller at beskeden ikke er tom
-        if (!message) {
+        if (!message || !message.trim()) {
             return res.status(400).json({
                 error: 'Message is required'
             });
@@ -167,6 +191,13 @@ chatRouter.post('/:id/messages', isAuthorized(1), async (req, res) => {
 
         // find chattens ejer id og krypter beskedf
         const chat = await getChatById(chatId);
+
+        if (!chat) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+
         const encryptedMessage = await encryptMessage(message, chat.owner);
 
         const newMessage = new Message(encryptedMessage, Date.now(), senderId, chatId, undefined);
@@ -190,6 +221,12 @@ chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res)
         const chat = await getChatById(chatId);
         const messageId = req.params.messageId;
 
+        if (!chat) {
+            return res.status(404).json({
+                error: 'Chat not found'
+            });
+        }
+
         const message = await getSpecificMessage(chatId, messageId);
         if (!message) return res.status(404).json({ error: 'Besked ikke fundet' });
 
@@ -205,9 +242,5 @@ chatRouter.get('/:chatId/messages/:messageId', isAuthorized(1), async (req, res)
         });
     }
 });
-
-
-
-
 
 export default chatRouter;

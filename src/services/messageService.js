@@ -1,6 +1,6 @@
 import { dbRef } from "../config/config.js";
 import Message from "../models/messageModel.js";
-import { collection, addDoc, getDoc, doc, deleteDoc, getDocs, updateDoc, query, where } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, getDocs, query, where } from "firebase/firestore";
 
 // konverter firestore
 const messageConverter = {
@@ -21,26 +21,26 @@ const messageConverter = {
 
 const messageCollection = collection(dbRef, "messages").withConverter(messageConverter);
 
-async function getMessagesByChatId(chatid) {
-    const q = query(messageCollection, where("chat", "==", chatid));
+async function getMessagesByChatId(chatId) {
+    const q = query(messageCollection, where("chat", "==", chatId));
     const snapshot = await getDocs(q);
 
     const messages = snapshot.docs.map((doc) => {
         return doc.data();
-    })
+    });
 
     return messages;
 }
 
-async function getSpecificMessage(chatid, messageid) {
-    const messageDocRef = doc(messageCollection, messageid);
+async function getSpecificMessage(chatId, messageId) {
+    const messageDocRef = doc(messageCollection, messageId);
     const snapshot = await getDoc(messageDocRef);
 
     if (!snapshot.exists()) return null;
 
     const message = snapshot.data();
 
-    if (message.chat != chatid) {
+    if (message.chat != chatId) {
         return null;
     }
 

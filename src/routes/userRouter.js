@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { insertUser, getUsers, deleteUser } from "../services/userService.js";
+import { insertUser, getUsers, deleteUser, getUserByUsername } from "../services/userService.js";
 import User from "../models/userModel.js";
 import crypto from 'crypto'
 import { isAuthorized } from "../middleware/authMiddleware.js";
@@ -29,55 +29,55 @@ userRouter.get('/', async (req, res) => {
 
 // hent create user page
 userRouter.get('/create', (req, res) => {
-  try {
+    try {
         res.render('createUser');
     } catch(error) {
         console.log(error)
         res.status(500).json({ error: "fejl" });
     }
-})
+});
 
 userRouter.post('/', async (req, res) => {
-  try {
-    const { username, password, level } = req.body;
+    try {
+        const { username, password, level } = req.body;
 
-    if (!username || !password || !level) {
-      return res.status(400).json({ error: "Username, password og level er påkrævet" });
+        if (!username || !password || !level) {
+            return res.status(400).json({ error: "Username, password og level er påkrævet" });
+        }
+
+        // Tjek om brugernavn allerede eksisterer
+        const existingUser = await getUserByUsername(username);
+
+        if (existingUser) {
+            return res.status(400).json({ error: "Brugernavnet er allerede i brug" });
+        }
+
+        //Hash password
+        const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+
+        //userId
+        const userId = crypto.randomUUID();
+
+        const newUser = new User(userId, username, hashedPassword, Date.now(), level);
+        await insertUser(newUser);
+
+        res.redirect('/users');
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Der skete en fejl under oprettelsen af brugeren" });
     }
-
-    //Hash password
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    //userId
-    const userId = crypto.randomUUID();
-
-    const newUser = new User(userId, username, hashedPassword, Date.now(), level)
-    await insertUser(newUser);
-
-    res.redirect('/users');
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ error: "Der skete en fejl under oprettelsen af brugeren" });
-  }
 });
 
 // delete user
 userRouter.delete('/:id', async (req, res) => {
-  try {
-    const userId = req.params.id;
-    if (userId) {
-
+    try {
+        const userId = req.params.id;
+        await deleteUser(userId);
+        res.status(204).send();
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({ error: "fejl" });
     }
-    const deleted = await deleteUser(userId);
-    if (deleted) {
-      res.status(204).send();
-    } else {
-      res.status(404).json({error: "Bruger blev ikke slettet"});
-    }
-    
-  } catch(error) {
-    console.log(error)
-    res.status(400).json({ error: "fejl" });
-  }
-})
+});
 
 export default userRouter;
