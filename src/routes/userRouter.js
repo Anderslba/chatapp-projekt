@@ -4,6 +4,8 @@ import User from "../models/userModel.js";
 import crypto from 'crypto'
 import { isAuthorized } from "../middleware/authMiddleware.js";
 import { isActive } from "../services/activityService.js";
+import { deleteMessagesByUserid } from "../services/messageService.js";
+import { deleteChatsByUserid } from "../services/chatService.js";
 
 const userRouter = Router();
 
@@ -19,7 +21,6 @@ userRouter.get('/', async (req, res) => {
             safeUser.isActive = isActive(safeUser.userId);
             return safeUser;
         });
-
         res.render('users', { users: safeUsers });
     } catch(error) {
         console.log(error)
@@ -70,14 +71,14 @@ userRouter.post('/', async (req, res) => {
 
 // delete user
 userRouter.delete('/:id', async (req, res) => {
-  try {
-    const userId = req.params.id;
-    await deleteUser(userId);
-    res.status(204).send();
-  } catch(error) {
-    console.log(error)
-    res.status(500).json({ error: "fejl" });
-  }
-})
+    try {
+        const userId = req.params.id;
+        await deleteUser(userId);
+        res.status(204).send();
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({ error: "fejl" });
+    }
+});
 
 export default userRouter;

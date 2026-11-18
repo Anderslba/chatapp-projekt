@@ -1,6 +1,6 @@
 import { dbRef } from "../config/config.js";
 import Chat from "../models/chatModel.js";
-import { collection, addDoc, getDoc, doc, deleteDoc, getDocs, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, deleteDoc, getDocs, updateDoc, query, where } from "firebase/firestore";
 
 // konverter firestore
 const chatConverter = {
@@ -72,4 +72,11 @@ async function editChat(id, name) {
     return { id, name };
 }
 
-export { insertChat, getChats, getChatById, deleteChat, editChat };
+async function deleteChatsByUserid(userId) {
+    const q = query(chatCollection, where("owner", "==", userId));
+    const snapshot = await getDocs(q);
+    
+    Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)))
+}
+
+export { insertChat, getChats, getChatById, deleteChat, editChat, deleteChatsByUserid };

@@ -1,6 +1,6 @@
 import { dbRef } from "../config/config.js";
 import Message from "../models/messageModel.js";
-import { collection, addDoc, getDoc, doc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, getDocs, query, where, deleteDoc } from "firebase/firestore";
 
 // konverter firestore
 const messageConverter = {
@@ -64,3 +64,11 @@ export { getMessagesByChatId,
     getSpecificMessage,
     insertMessage, 
     getMessagesBySenderId };
+async function deleteMessagesByUserid(userId) {
+    const q = query(messageCollection, where("senderId", "==", userId));
+    const snapshot = await getDocs(q);
+
+    Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)))
+}
+
+export { getMessagesByChatId, getSpecificMessage, insertMessage, deleteMessagesByUserid };
