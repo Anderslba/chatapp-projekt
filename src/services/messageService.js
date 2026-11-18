@@ -60,10 +60,6 @@ async function getMessagesBySenderId(senderId) {
     return snapshot.docs.map(doc => doc.data());
 }
 
-export { getMessagesByChatId,
-    getSpecificMessage,
-    insertMessage, 
-    getMessagesBySenderId };
 async function deleteMessagesByUserid(userId) {
     const q = query(messageCollection, where("senderId", "==", userId));
     const snapshot = await getDocs(q);
@@ -71,4 +67,4 @@ async function deleteMessagesByUserid(userId) {
     Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)))
 }
 
-export { getMessagesByChatId, getSpecificMessage, insertMessage, deleteMessagesByUserid };
+export { getMessagesByChatId, getSpecificMessage, insertMessage,getMessagesBySenderId, deleteMessagesByUserid };
