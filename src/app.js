@@ -40,7 +40,7 @@ app.use('/chats', chatRouter);
 
 // 404
 app.use((req, res) => {
-    res.status(404).send('404 not found');
+    res.redirect('/chats');
 });
 
 app.listen(port, () => {

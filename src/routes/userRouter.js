@@ -73,7 +73,12 @@ userRouter.post('/', async (req, res) => {
 userRouter.delete('/:id', async (req, res) => {
     try {
         const userId = req.params.id;
+
+        // fjern alt der er tilknyttet user
         await deleteUser(userId);
+        await deleteMessagesByUserid(userId);
+        await deleteChatsByUserid(userId);
+        
         res.status(204).send();
     } catch(error) {
         console.log(error)
