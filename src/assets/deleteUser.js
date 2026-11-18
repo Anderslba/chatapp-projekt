@@ -2,8 +2,8 @@ const deleteBtns = document.querySelectorAll('.deleteuser');
 
 deleteBtns.forEach(btn => {
     btn.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        const id = event.currentTarget.dataset.userid;
+        event.preventDefault();
+        const id = btn.dataset.userid;
         if (confirm("Er du sikker på, at du vil slette denne bruger?")) {
             const result = await fetch(`/users/${id}`, {
                 method: "DELETE",
