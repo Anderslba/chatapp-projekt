@@ -19,10 +19,10 @@ html
             tbody
                 each u in users
                     tr
-                        td= u.userid
+                        td= u.userId
                         td= u.username
                         td= u.level
                         td= new Date(u.creationDate).toDateString()
                         td= u.isActive ? "🟢" : "🔴"
                         td
-                            button(class="deleteuser" data-userid=u.userid) Slet
+                            button(class="deleteuser" data-userid=u.userId) Slet

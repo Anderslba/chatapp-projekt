@@ -1,5 +1,6 @@
 import { dbRef } from "../config/config.js";
 import Message from "../models/messageModel.js";
+import { decryptMessage } from "./cryptoService.js";
 import { collection, addDoc, getDoc, doc, deleteDoc, getDocs, updateDoc, query, where } from "firebase/firestore";
 
 // konverter firestore
@@ -25,9 +26,11 @@ async function getMessagesByChatId(chatid) {
     const q = query(messageCollection, where("chat", "==", chatid));
     const snapshot = await getDocs(q);
 
-    const messages = snapshot.docs.map((doc) => {
+    let messages = snapshot.docs.map((doc) => {
         return doc.data();
     })
+
+    messages = messages.sort((msg1, msg2) => msg2.creationDate - msg1.creationDate);
 
     return messages;
 }
