@@ -42,7 +42,16 @@ authRouter.post("/login", async (req, res) => {
         req.session.userId = user.userId;
         req.session.userLevel = user.level;
 
-        return res.redirect("/chats");
+        req.session.save((error) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({
+                    error: "Kunne ikke gemme session"
+                });
+            }
+
+            return res.redirect("/chats");
+        });
 
     } catch (error) {
         console.error(error);
@@ -55,8 +64,14 @@ authRouter.post("/login", async (req, res) => {
 
 // POST logout
 authRouter.post("/logout", (req, res) => {
-    req.session.destroy();
+    req.session.destroy((error) => {
+        if (error) {
+            console.error(error);
+            return res.status(500).send("Kunne ikke logge ud");
+        }
+
         res.redirect("/login");
     });
+});
 
 export default authRouter;

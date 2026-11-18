@@ -1,15 +1,20 @@
 import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import User from '../models/userModel.js';
 import { generateKeyPair } from './cryptoService.js';
 
-const usersDirPath = './database/users/';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const usersDirPath = path.join(__dirname, '../database/users');
 
 function userDir(userId) {
-    return usersDirPath + userId + '/';
+    return path.join(usersDirPath, userId);
 }
 
 function userFile(userId) {
-    return userDir(userId) + `${userId}.json`;
+    return path.join(userDir(userId), `${userId}.json`);
 }
 
 async function insertUser(user) {
@@ -65,11 +70,11 @@ async function deleteUser(userId) {
 }
 
 async function getPrivateKey(userId) {
-    return await fs.readFile(userDir(userId) + 'private.pem');
+    return await fs.readFile(path.join(userDir(userId), 'private.pem'));
 }
 
 async function getPublicKey(userId) {
-    return await fs.readFile(userDir(userId) + 'public.pem');
+    return await fs.readFile(path.join(userDir(userId), 'public.pem'));
 }
 
 export { insertUser, getUsers, getUserByUsername, getUserById, deleteUser, getPrivateKey, getPublicKey };

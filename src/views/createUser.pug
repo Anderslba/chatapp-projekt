@@ -7,15 +7,16 @@ html
             h1 Create new user 
             form(action="/users" method="POST" class="userform")
                 div
-                    label(for="username") username
-                    input(name="username")
+                    label(for="username") Brugernavn
+                    input(type="text" name="username" id="username" required)
                 div
-                    label(for="password") password
-                    input(name="password")
+                    label(for="password") Password
+                    input(type="password" name="password" id="password" required)
                 div 
-                    select(name="level" )
-                        option(value="1") 1
-                        option(value="2") 2
-                        option(value="3") 3
-                
-                button(type="submit") create user
+                    label(for="level") Brugerniveau
+                    select(name="level" id="level" required)
+                        option(value="1") 1 - Bruger
+                        option(value="2") 2 - Chatadministrator
+                        option(value="3") 3 - Administrator
+
+                button(type="submit") Opret bruger

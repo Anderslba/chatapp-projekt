@@ -17,7 +17,7 @@ html, body {
 }
 
 /* fælles elementer */
-button, input {
+button, input, select {
     font: inherit;
     border-radius: 8px;
 }
@@ -30,7 +30,7 @@ button {
     cursor: pointer;
 }
 
-.deleteBtn:hover {
+.deleteuser:hover, .deletechat:hover {
     color: #c0392b;
     border-color: #c0392b;
 }
@@ -146,4 +146,15 @@ header ul {
 
 .users-table tbody tr:hover {
     background: #f2f2f2;
+}
+
+@media (max-width: 750px) {
+    .userform, .chats, .messages, .messageForm, .users-table {
+        width: 95%;
+    }
+
+    header ul {
+        grid-auto-flow: row;
+        gap: 12px;
+    }
 }

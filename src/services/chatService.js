@@ -38,17 +38,23 @@ async function getChats() {
 async function getChatById(id) {
     const chatDocRef = doc(dbRef, "chats", id).withConverter(chatConverter);
     const snapshot = await getDoc(chatDocRef);
-    
+
     if (!snapshot.exists()) {
         return null;
     }
-    
+
     return snapshot.data();
 }
 
 // Slet chat med ID
 async function deleteChat(id) {
     const chatDocRef = doc(dbRef, "chats", id);
+    const snapshot = await getDoc(chatDocRef);
+
+    if (!snapshot.exists()) {
+        return null;
+    }
+
     await deleteDoc(chatDocRef);
     return { deletedId: id };
 }
@@ -56,6 +62,12 @@ async function deleteChat(id) {
 // Rediger navn på chat
 async function editChat(id, name) {
     const chatDocRef = doc(dbRef, "chats", id);
+    const snapshot = await getDoc(chatDocRef);
+
+    if (!snapshot.exists()) {
+        return null;
+    }
+
     await updateDoc(chatDocRef, { name: name });
     return { id, name };
 }
