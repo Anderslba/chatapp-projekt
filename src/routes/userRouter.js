@@ -70,14 +70,14 @@ userRouter.post('/', async (req, res) => {
 
 // delete user
 userRouter.delete('/:id', async (req, res) => {
-    try {
-        const userId = req.params.id;
-        await deleteUser(userId);
-        res.status(204).send();
-    } catch(error) {
-        console.log(error)
-        res.status(500).json({ error: "fejl" });
-    }
-});
+  try {
+    const userId = req.params.id;
+    await deleteUser(userId);
+    res.status(204).send();
+  } catch(error) {
+    console.log(error)
+    res.status(500).json({ error: "fejl" });
+  }
+})
 
 export default userRouter;

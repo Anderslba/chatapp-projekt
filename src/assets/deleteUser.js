@@ -4,21 +4,15 @@ deleteBtns.forEach(btn => {
     btn.addEventListener('click', async (event) => {
         event.stopPropagation();
         const id = event.currentTarget.dataset.userid;
-
         if (confirm("Er du sikker på, at du vil slette denne bruger?")) {
-            try {
-                const result = await fetch(`/users/${id}`, {
-                    method: "DELETE",
-                });
+            const result = await fetch(`/users/${id}`, {
+                method: "DELETE",
+            })
 
-                if (result.ok) {
-                    window.location.href = "/users";
-                } else {
-                    alert("Kunne ikke slette brugeren");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Kunne ikke få kontakt til serveren");
+            if (result.ok) {
+                window.location.href="/users"
+            } else {
+                alert("Kunne ikke slette brugeren");
             }
         }
     });

@@ -38,7 +38,7 @@ chatRouter.get('/create', isAuthorized(2), async (req, res) => {
     }
 });
 
-//GET-Route ID
+//GET - hent chat
 chatRouter.get('/:id', isAuthorized(1), async (req, res) => {
     try {
         const chat = await getChatById(req.params.id);

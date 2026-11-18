@@ -64,8 +64,10 @@ async function getUserById(userId) {
 async function deleteUser(userId) {
     try {
         await fs.rm(userDir(userId), { recursive: true });
+        return true
     } catch (err) {
-        console.log(err)
+        console.log(err);
+        return false
     }
 }
 
