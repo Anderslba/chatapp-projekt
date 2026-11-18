@@ -53,4 +53,14 @@ async function insertMessage(message) {
     return message;
 }
 
-export { getMessagesByChatId, getSpecificMessage, insertMessage };
+async function getMessagesBySenderId(senderId) {
+    const q = query(messageCollection, where("senderId", "==", senderId));
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => doc.data());
+}
+
+export { getMessagesByChatId,
+    getSpecificMessage,
+    insertMessage, 
+    getMessagesBySenderId };

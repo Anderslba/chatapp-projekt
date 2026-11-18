@@ -6,9 +6,10 @@ import Chat from '../models/chatModel.js';
 import Message from '../models/messageModel.js';
 
 import { deleteChat, getChatById, getChats, insertChat , editChat} from '../services/chatService.js';
-import { getMessagesByChatId, getSpecificMessage, insertMessage } from '../services/messageService.js'
+import { getMessagesByChatId, getSpecificMessage, insertMessage, getMessagesBySenderId } from '../services/messageService.js'
 import { encryptMessage, decryptMessage } from "../services/cryptoService.js";
 import { getUserById } from "../services/userService.js";
+import { charLength } from "firebase/firestore/pipelines";
 
 const chatRouter = Router();
 
@@ -35,6 +36,41 @@ chatRouter.get('/create', isAuthorized(2), async (req, res) => {
         res.status(500).json({
             error: 'Could not retrieve chats'
         })
+    }
+});
+
+// GET - Vis alle beskeder sendt af den indloggede bruger
+chatRouter.get('/my-messages', isAuthorized(1), async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const messages = await getMessagesBySenderId(userId);
+
+        const decryptedMessages = [];
+
+        for (const message of messages) {
+            const chat = await getChatById(message.chat);
+
+            if (!chat) continue;
+
+            const decryptedMessage = await decryptMessage(
+                message.message,
+                chat.owner
+            );
+
+            decryptedMessages.push({
+                message: decryptedMessage,
+                creationDate: message.creationDate,
+                chatName: chat.name
+            });
+        }
+
+        decryptedMessages.sort((a, b) => b.creationDate - a.creationDate);
+
+        res.render('myMessages', { messages: decryptedMessages });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Kunne ikke hente beskeder');
     }
 });
 

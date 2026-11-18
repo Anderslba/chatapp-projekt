@@ -1,0 +1,19 @@
+html
+    head
+        title Mine beskeder
+        link(rel="stylesheet", href="/styles.css")
+    body(class="wrapper-center")
+        a(href="/chats") ← Tilbage til chats
+
+        h1 Mine sendte beskeder
+            
+
+        if messages.length === 0
+            p Du har ikke sendt nogen beskeder endnu.
+
+        else
+            each message in messages
+                div(class="message-card")
+                    h3= message.chatName
+                    p= message.message
+                    small= new Date(message.creationDate).toLocaleString('da-DK')
